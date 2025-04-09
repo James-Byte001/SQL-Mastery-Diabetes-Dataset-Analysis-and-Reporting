@@ -92,13 +92,43 @@ Here’s how you can calculate Q1, Q3, and the IQR for **Glucose** .
 
 Once outliers are identified, you can decide whether to remove them. For example, if you consider values below the lower bound or above the upper bound as outliers for **Glucose**, you can delete those rows using the following SQL query:
 
+    ```sql
+    DELETE FROM healthcare.diabetes_data
+    WHERE Glucose < (SELECT PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY Glucose) - 1.5 * (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY Glucose) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY Glucose)))
+    OR Glucose > (SELECT PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY Glucose) + 1.5 * (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY Glucose) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY Glucose)));
+
+
+
+
+## Step 4: Data Transformation
+
+Data transformation involves converting data from its original format into a form that is more suitable for analysis. This could include normalizing, scaling, or encoding certain columns.
+
+### a. Normalizing and Scaling Data
+
+Sometimes, data needs to be scaled or normalized, especially if you plan to use the data for statistical modeling or machine learning. For example, **Glucose** and **BMI** might have very different ranges. You can normalize them so that all variables are on a similar scale.
+
+You can normalize a column using the **MIN-MAX scaling** technique. Here's how to scale **Glucose**:
+
+    ```sql
+    SELECT 
+    MIN(Glucose) AS min_glucose,
+    MAX(Glucose) AS max_glucose
+    FROM healthcare.diabetes_data;
+
+### b. Encoding Categorical Data
+
+If your dataset contains categorical data (e.g., "Outcome"), you may need to encode it as numeric values for analysis. For example, you can use **CASE WHEN** statements to transform "Outcome" into binary values.
+
+Here's how you can encode **Outcome**:
+
 ```sql
-DELETE FROM healthcare.diabetes_data
-WHERE Glucose < (SELECT PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY Glucose) - 1.5 * (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY Glucose) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY Glucose)))
-   OR Glucose > (SELECT PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY Glucose) + 1.5 * (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY Glucose) - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY Glucose)));
-
-
-
+UPDATE healthcare.diabetes_data
+SET Outcome = CASE 
+    WHEN Outcome = 'Positive' THEN 1
+    WHEN Outcome = 'Negative' THEN 0
+    ELSE NULL
+END;
 
 
 
